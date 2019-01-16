@@ -144,16 +144,19 @@ class App extends Component<{}, State> {
     this.setState({
       userValue: query,
       repoValue: "",
-      versionValue: ""
+      repos: [],
+      versionValue: "",
+      versions: [],
+      versionSelected: undefined
     }, this.persistState)
   }
 
-  fetchRepos (query: string) {
+  fetchRepos (userValue: string, page: number) {
     this.setState({
       loading: 'repo'
     })
 
-    octokit.search.repos({q: `${query}:user:${this.state.userValue}`, order: 'asc', per_page: 100})
+    octokit.search.repos({q: `user:${this.state.userValue}`, order: 'asc', per_page: 100, page})
     .then((response: any) => {
       this.setState({
         repos: [],
@@ -165,15 +168,25 @@ class App extends Component<{}, State> {
         return;
       }
 
+      let value = []
       if (response.data.total_count > 0) {
-        this.setState({
-          repos: response.data.items
-        }, this.persistState)
+        value = response.data.items
+
+        if (page !== 1) {
+          value = this.state.versions.concat(value)
+        }
+      }
+
+      this.setState({
+        repos: value
+      }, this.persistState)
+
+      if (response.data.length == 100) {
+        this.fetchVersions(userValue, page++)
       }
     })
 
     this.setState({
-      repoValue: query,
       versionValue: "",
       versions: [],
       versionSelected: undefined
@@ -193,16 +206,16 @@ class App extends Component<{}, State> {
         value = response.data
 
         if (page !== 1) {
-          value = this.state.versions.concat(response.data)
+          value = this.state.versions.concat(value)
         }
       }
 
       this.setState({
-          versions: value
-        }, this.persistState)
+        versions: value
+      }, this.persistState)
 
       if (response.data.length == 100) {
-        this.fetchVersions(repoValue,2)
+        this.fetchVersions(repoValue, page++)
       }
     })
   }
@@ -225,8 +238,11 @@ class App extends Component<{}, State> {
           this.fetchUsers(value)
           this.setState({ step: "repo" }, this.persistState)
         }}
-        onSelect={userValue => this.setState({ userValue, step: "repo", repos: [] }, this.persistState)}
-            inputProps={{style: {width: '200px'}}}
+        onSelect={userValue => {
+          this.fetchRepos(userValue, 1)
+          this.setState({ userValue, step: "repo", repos: [] }, this.persistState)
+        }}
+        inputProps={{style: {width: '200px'}}}
       />
       {
         this.state.loading === 'user' ? "Loading" : null
@@ -246,11 +262,7 @@ class App extends Component<{}, State> {
               </div>
             }
             value={this.state.repoValue}
-            onChange={e => {
-              const value = e.target.value
-              this.fetchRepos(value)
-              this.setState({ step: "version" }, this.persistState)
-            }}
+            onChange={e => this.setState({ repoValue: e.target.value, step: "version" }, this.persistState)}
             onSelect={repoValue => {
               this.setState({ repoValue, step: "version", versions: [], versionSelected: undefined }, this.persistState)
               this.fetchVersions(repoValue, 1)
