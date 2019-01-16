@@ -1,5 +1,6 @@
 {
   "name": "finder",
+  "author": "Nejc Zdovc",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
