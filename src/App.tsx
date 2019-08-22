@@ -46,7 +46,7 @@ interface GitHubVersionAsset {
 }
 
 const CLIENT_ID = "9aa654ac32dd532c5560";
-const REDIRECT_URI = "http://localhost:3000/";
+const REDIRECT_URI = "https://repos-finder.netlify.com";
 const localStorageKey = "state";
 
 class App extends Component<{}, State> {
